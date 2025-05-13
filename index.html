@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PortZen | Screenshot to Code Generator</title>
+  <script src="https://js.puter.com/v2/"></script>
+  <style>
+    :root {
+      --primary: #5a67d8;
+      --light: #f7fafc;
+      --dark: #2d3748;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+    }
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #ece9e6, #ffffff);
+      color: var(--dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      width: 100%; max-width: 800px;
+      background: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    header h1 { font-size: 1.75rem; }
+    .content {
+      padding: 2rem;
+      display: grid;
+      grid-gap: 1.5rem;
+    }
+    .upload-box {
+      border: 2px dashed var(--border);
+      border-radius: 8px;
+      padding: 2rem;
+      text-align: center;
+      transition: border-color .3s;
+    }
+    .upload-box:hover { border-color: var(--primary); }
+    .upload-box input[type="file"] { opacity:0; position:absolute; width:100%; height:100%; top:0; left:0; cursor:pointer; }
+    .upload-box span { display:block; color: var(--dark); font-size: 1rem; }
+    #preview {
+      width: 100%; height: 300px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--light);
+      overflow: hidden;
+    }
+    #preview img { max-width:100%; max-height:100%; }
+    .actions {
+      display: flex;
+      gap: 1rem;
+    }
+    button {
+      flex:1;
+      padding: 0.75rem;
+      border:none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background .3s, transform .2s;
+    }
+    button:disabled { opacity:0.6; cursor: not-allowed; }
+    button.primary {
+      background: var(--primary);
+      color: white;
+    }
+    button.primary:hover { background: #434190; transform: translateY(-2px); }
+    button.secondary {
+      background: var(--light);
+      color: var(--dark);
+      border: 1px solid var(--border);
+    }
+    button.secondary:hover { background: #edf2f7; }
+    #code-output {
+      width: 100%; height: 200px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      background: var(--light);
+      resize: vertical;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Screenshot → Code Generator</h1>
+    </header>
+    <div class="content">
+      <div class="upload-box">
+        <span>📁 Click or drag to upload screenshot</span>
+        <input type="file" id="file-picker" accept="image/*">
+      </div>
+
+      <div id="preview">Preview will appear here</div>
+
+      <div class="actions">
+        <button id="generate-btn" class="primary" disabled>Generate Code</button>
+        <button id="clear-btn" class="secondary">Clear</button>
+      </div>
+
+      <textarea id="code-output" placeholder="Generated code will appear here..." readonly></textarea>
+    </div>
+  </div>
+
+  <script>
+    const picker = document.getElementById('file-picker');
+    const preview = document.getElementById('preview');
+    const generateBtn = document.getElementById('generate-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const codeOutput = document.getElementById('code-output');
+
+    let screenshotData = '';
+
+    picker.addEventListener('change', () => {
+      const file = picker.files[0]; if (!file) return;
+      const img = document.createElement('img');
+      preview.innerHTML = '';
+      preview.appendChild(img);
+      const reader = new FileReader();
+      reader.onload = e => {
+        screenshotData = e.target.result;
+        img.src = screenshotData;
+        generateBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    generateBtn.addEventListener('click', async () => {
+      if (!screenshotData) return;
+      generateBtn.textContent = 'Generating...';
+      generateBtn.disabled = true;
+      codeOutput.textContent = '';
+      try {
+        const response = await puter.ai.chat(
+          `Convert this UI screenshot into semantic, responsive HTML5 and CSS. Include mobile breakpoints and comments explaining each section.`,
+          screenshotData
+        );
+        codeOutput.textContent = response;
+      } catch (e) {
+        codeOutput.textContent = 'Error generating code.';
+      } finally {
+        generateBtn.textContent = 'Generate Code';
+        generateBtn.disabled = false;
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      preview.innerHTML = 'Preview will appear here';
+      codeOutput.textContent = '';
+      picker.value = null;
+      generateBtn.disabled = true;
+    });
+  </script>
+</body>
+</html>
